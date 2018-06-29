@@ -72,7 +72,6 @@ func CredentialsFromJSON(ctx context.Context, jsonData []byte, scopes []string) 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Print(ts.Token())
 	return &Credentials{
 		ProjectID:   f.ProjectID,
 		TokenSource: ts,
