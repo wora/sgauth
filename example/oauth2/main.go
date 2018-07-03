@@ -8,11 +8,11 @@ import (
 	"github.com/wora/protorpc/client"
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/genproto/googleapis/api/servicemanagement/v1"
-	"sgauth/oauth2/google"
+	"sgauth/oauth2"
 )
 
 func NewClient(ctx context.Context, baseUrl string) (*client.Client, error) {
-	http, err := google.DefaultClient(ctx, "https://www.googleapis.com/auth/cloud-platform")
+	http, err := oauth2.DefaultClient(ctx, "https://www.googleapis.com/auth/cloud-platform")
 	if err != nil {
 		return nil, err
 	}

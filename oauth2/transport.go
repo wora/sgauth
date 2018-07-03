@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"sync"
+	"sgauth/oauth2/internal"
 )
 
 // Transport is an http.RoundTripper that makes OAuth 2.0 HTTP requests,
@@ -16,7 +17,7 @@ import (
 type Transport struct {
 	// Source supplies the token to add to outgoing requests'
 	// Authorization headers.
-	Source TokenSource
+	Source internal.TokenSource
 
 	// Base is the base RoundTripper used to make HTTP requests.
 	// If nil, http.DefaultTransport is used.

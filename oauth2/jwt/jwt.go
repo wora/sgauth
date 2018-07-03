@@ -18,12 +18,12 @@ import (
 	"strings"
 	"time"
 	"golang.org/x/oauth2/jws"
-	"golang.org/x/net/context"
-	"sgauth/oauth2"
 	"crypto/rsa"
 	"encoding/pem"
 	"crypto/x509"
 	"errors"
+	"context"
+	"sgauth/oauth2/internal"
 )
 
 var (
@@ -33,7 +33,7 @@ var (
 
 // Config is the configuration for using JWT to fetch tokens,
 // commonly known as "two-legged OAuth 2.0".
-type Config struct {
+type JWTConfig struct {
 	// Email is the OAuth client identifier used when communicating with
 	// the configured OAuth provider.
 	Email string
@@ -67,37 +67,29 @@ type Config struct {
 
 // TokenSource returns a JWT TokenSource using the configuration
 // in c and the HTTP client from the provided context.
-func (c *Config) TokenSource(ctx context.Context) oauth2.TokenSource {
-	return oauth2.ReuseTokenSource(nil, jwtSource{ctx, c})
-}
-
-// Client returns an HTTP client wrapping the context's
-// HTTP transport and adding Authorization headers with tokens
-// obtained from c.
-//
-// The returned client and its Transport should not be modified.
-func (c *Config) Client(ctx context.Context) *http.Client {
-	return oauth2.NewClient(ctx, c.TokenSource(ctx))
+func (c *JWTConfig) TokenSource(ctx context.Context) internal.TokenSource {
+	return internal.ReuseTokenSource(nil, jwtSource{ctx, c})
 }
 
 // jwtSource is a source that always does a signed JWT request for a token.
 // It should typically be wrapped with a reuseTokenSource.
 type jwtSource struct {
 	ctx  context.Context
-	conf *Config
+	conf *JWTConfig
 }
 
-func (js jwtSource) Token() (*oauth2.Token, error) {
+func (js jwtSource) Token() (*internal.Token, error) {
 	pk, err := ParseKey(js.conf.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
-	hc := oauth2.NewClient(js.ctx, nil)
+	hc := http.DefaultClient
 	claimSet := &jws.ClaimSet{
 		Iss:   js.conf.Email,
 		Scope: strings.Join(js.conf.Scopes, " "),
 		Aud:   js.conf.TokenURL,
 	}
+	fmt.Println("Token URL: " + js.conf.TokenURL)
 	if subject := js.conf.Subject; subject != "" {
 		claimSet.Sub = subject
 		// prn is the old name of sub. Keep setting it
@@ -117,7 +109,6 @@ func (js jwtSource) Token() (*oauth2.Token, error) {
 	v.Set("grant_type", defaultGrantType)
 	v.Set("assertion", payload)
 
-	fmt.Println(js.conf.TokenURL)
 	resp, err := hc.PostForm(js.conf.TokenURL, v)
 	if err != nil {
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
@@ -128,7 +119,7 @@ func (js jwtSource) Token() (*oauth2.Token, error) {
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
 	}
 	if c := resp.StatusCode; c < 200 || c > 299 {
-		return nil, &oauth2.RetrieveError{
+		return nil, &internal.RetrieveError{
 			Response: resp,
 			Body:     body,
 		}
@@ -143,7 +134,7 @@ func (js jwtSource) Token() (*oauth2.Token, error) {
 	if err := json.Unmarshal(body, &tokenRes); err != nil {
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", err)
 	}
-	token := &oauth2.Token{
+	token := &internal.Token{
 		AccessToken: tokenRes.AccessToken,
 		TokenType:   tokenRes.TokenType,
 	}
