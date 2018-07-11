@@ -141,3 +141,24 @@ func RetrieveToken(ctx context.Context, c *Config, v url.Values) (*Token, error)
 	return tk, nil
 }
 
+// TokenSource supplies PerRPCCredentials from an oauth2.TokenSource.
+type GrpcTokenSource struct {
+	TokenSource
+}
+
+// GetRequestMetadata gets the request metadata as a map from a TokenSource.
+func (ts GrpcTokenSource) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+	token, err := ts.Token()
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{
+		"authorization": token.Type() + " " + token.AccessToken,
+	}, nil
+}
+
+// RequireTransportSecurity indicates whether the credentials requires transport security.
+func (ts GrpcTokenSource) RequireTransportSecurity() bool {
+	return true
+}
+

@@ -5,6 +5,10 @@ import (
 	"sgauth/oauth2/internal"
 	"golang.org/x/net/context"
 	"sgauth/oauth2/credentials"
+	"google.golang.org/grpc"
+	"crypto/x509"
+	grpccredentials "google.golang.org/grpc/credentials"
+
 )
 
 // NewClient creates an *http.Client from a TokenSource.
@@ -19,6 +23,20 @@ func NewClient(src internal.TokenSource) *http.Client {
 			Source: internal.ReuseTokenSource(nil, src),
 		},
 	}
+}
+
+// NewClient creates an *http.Client from a TokenSource.
+// The returned client is not valid beyond the lifetime of the context.
+func DefaultGrpcConn(ctx context.Context, scope ...string) (*grpc.ClientConn, error) {
+	pool, _ := x509.SystemCertPool()
+	// error handling omitted
+	creds := grpccredentials.NewClientTLSFromCert(pool, "")
+	perRPC, _ := credentials.NewApplicationDefault(ctx, scope...)
+	return grpc.Dial(
+		"servicemanagement.googleapis.com:443",
+		grpc.WithTransportCredentials(creds),
+		grpc.WithPerRPCCredentials(perRPC),
+	)
 }
 
 // DefaultClient returns an HTTP Client that uses the

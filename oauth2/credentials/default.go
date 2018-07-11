@@ -11,6 +11,7 @@ import (
 	"os"
 	"golang.org/x/net/context"
 	"sgauth/oauth2/internal"
+	"google.golang.org/grpc/credentials"
 )
 
 // Credentials holds Google credentials, including "Application Default Credentials".
@@ -36,6 +37,17 @@ func DefaultTokenSource(ctx context.Context, scope ...string) (internal.TokenSou
 		return nil, err
 	}
 	return creds.TokenSource, nil
+}
+
+
+// NewApplicationDefault returns "Application Default Credentials". For more
+// detail, see https://developers.google.com/accounts/docs/application-default-credentials.
+func NewApplicationDefault(ctx context.Context, scope ...string) (credentials.PerRPCCredentials, error) {
+	t, err := DefaultTokenSource(ctx, scope...)
+	if err != nil {
+		return nil, err
+	}
+	return internal.GrpcTokenSource{t}, nil
 }
 
 func FindDefaultCredentials(ctx context.Context, scopes []string) (*Credentials, error) {
