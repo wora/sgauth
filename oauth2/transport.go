@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 	"sync"
-	"sgauth/oauth2/internal"
+	"github.com/shinfan/sgauth/oauth2/internal"
 )
 
 // Transport is an http.RoundTripper that makes OAuth 2.0 HTTP requests,

@@ -23,7 +23,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"context"
-	"sgauth/oauth2/internal"
+	"github.com/shinfan/sgauth/oauth2/internal"
 )
 
 var (

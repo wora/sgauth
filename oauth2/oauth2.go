@@ -2,9 +2,9 @@ package oauth2
 
 import (
 	"net/http"
-	"sgauth/oauth2/internal"
+	"github.com/shinfan/sgauth/oauth2/internal"
 	"golang.org/x/net/context"
-	"sgauth/oauth2/credentials"
+	"github.com/shinfan/sgauth/oauth2/credentials"
 	"google.golang.org/grpc"
 	"crypto/x509"
 	grpccredentials "google.golang.org/grpc/credentials"

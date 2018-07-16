@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/net/context"
-	"sgauth/oauth2/internal"
-	"sgauth/oauth2/jwt"
+	"github.com/shinfan/sgauth/oauth2/internal"
+	"github.com/shinfan/sgauth/oauth2/jwt"
 )
 
 // DefaultTokenURL is Google's OAuth 2.0 token URL to use with the JWT flow.

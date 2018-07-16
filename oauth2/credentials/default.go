@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"golang.org/x/net/context"
-	"sgauth/oauth2/internal"
+	"github.com/shinfan/sgauth/oauth2/internal"
 	"google.golang.org/grpc/credentials"
 )
 
