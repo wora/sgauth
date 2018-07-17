@@ -12,7 +12,7 @@ import (
 )
 
 func NewHTTPClient(ctx context.Context, baseUrl string) (*client.Client, error) {
-	http, err := oauth2.DefaultClient(ctx, "https://www.googleapis.com/auth/cloud-platform")
+	http, err := oauth2.DefaultClient(ctx, "https://www.googleapis.com/auth/xapi.zoo")
 	if err != nil {
 		return nil, err
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/wora/protorpc/client"
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/genproto/googleapis/api/servicemanagement/v1"
-	"github.com/shinfan/github.com/shinfan/sgauth/oauth2"
+	"github.com/shinfan/sgauth/oauth2"
 	"os"
 )
 
