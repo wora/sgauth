@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
+	"errors"
 )
 
 // Token represents the credentials used to authorize
@@ -139,6 +140,37 @@ func RetrieveToken(ctx context.Context, c *Config, v url.Values) (*Token, error)
 		return nil, err
 	}
 	return tk, nil
+}
+
+// tokenRefresher is a TokenSource that makes "grant_type"=="refresh_token"
+// HTTP requests to renew a token using a RefreshToken.
+type tokenRefresher struct {
+	ctx          context.Context // used to get HTTP requests
+	conf         *Config
+	refreshToken string
+}
+
+// WARNING: Token is not safe for concurrent access, as it
+// updates the tokenRefresher's refreshToken field.
+// Within this package, it is used by reuseTokenSource which
+// synchronizes calls to this method with its own mutex.
+func (tf *tokenRefresher) Token() (*Token, error) {
+	if tf.refreshToken == "" {
+		return nil, errors.New("oauth2: token expired and refresh token is not set")
+	}
+
+	tk, err := RetrieveToken(tf.ctx, tf.conf, url.Values{
+		"grant_type":    {"refresh_token"},
+		"refresh_token": {tf.refreshToken},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	if tf.refreshToken != tk.RefreshToken {
+		tf.refreshToken = tk.RefreshToken
+	}
+	return tk, err
 }
 
 // TokenSource supplies PerRPCCredentials from an oauth2.TokenSource.

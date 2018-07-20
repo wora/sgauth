@@ -6,7 +6,7 @@ import "context"
 import (
 	"github.com/wora/protorpc/client"
 	"github.com/golang/protobuf/proto"
-	"google.golang.org/genproto/googleapis/example/library/v1"
+	"google.golang.org/genproto/googleapis/api/servicemanagement/v1"
 	"github.com/shinfan/sgauth/oauth2"
 	"os"
 	"net/http"
@@ -17,9 +17,9 @@ func NewHTTPClient(ctx context.Context, baseUrl string, use_jwt bool, aud string
 	var http *http.Client
 	var err error
 	if (use_jwt) {
-		http, err = oauth2.JWTClient(ctx, aud,"https://www.googleapis.com/auth/xapi.zoo")
+		http, err = oauth2.JWTClient(ctx, aud,"https://www.googleapis.com/auth/cloud-platform")
 	} else {
-		http, err = oauth2.DefaultClient(ctx, "https://www.googleapis.com/auth/xapi.zoo")
+		http, err = oauth2.DefaultClient(ctx, "https://www.googleapis.com/auth/cloud-platform")
 	}
 	if err != nil {
 		return nil, err
@@ -32,15 +32,14 @@ func NewHTTPClient(ctx context.Context, baseUrl string, use_jwt bool, aud string
 	return c, nil
 }
 
-func NewGrpcClient(ctx context.Context, use_jwt bool, aud string) (library.LibraryServiceClient) {
+func NewGrpcClient(ctx context.Context, use_jwt bool, aud string) (servicemanagement.ServiceManagerClient) {
 	var conn *grpc.ClientConn
 	if (use_jwt) {
-		conn, _ = oauth2.JWTGrpcConn(ctx, "test-xxiang-library-example.sandbox.googleapis.com", "443",  aud)
+		conn, _ = oauth2.JWTGrpcConn(ctx, "servicemanagement.googleapis.com", "443",  aud)
 	} else {
-		conn, _ = oauth2.DefaultGrpcConn(ctx,
-			"test-xxiang-library-example.sandbox.googleapis.com", "443", "https://www.googleapis.com/auth/xapi.zoo")
+		conn, _ = oauth2.DefaultGrpcConn(ctx, "servicemanagement.googleapis.com", "443", "https://www.googleapis.com/auth/cloud-platform")
 	}
-	return library.NewLibraryServiceClient(conn)
+	return servicemanagement.NewServiceManagerClient(conn)
 }
 
 func contains(arr []string, str string) bool {
@@ -78,10 +77,11 @@ func main() {
 
 	use_jwt := false
 	aud := ""
-	if contains(os.Args, "--jwt") {
+	if contains(os.Args, "--jwt"){
 		use_jwt = true;
 		aud = getAudience()
 	}
+
 
 	if os.Args[1] == "protorpc" {
 		if len(os.Args) < 3 {
@@ -89,30 +89,30 @@ func main() {
 			return
 		}
 
-		baseUrl := os.Args[len(os.Args)-1]
+		baseUrl := os.Args[len(os.Args) - 1]
 		c, err := NewHTTPClient(context.Background(), baseUrl, use_jwt, aud)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
-		request := &library.ListShelvesRequest{}
-		response := &library.ListShelvesResponse{}
-		err = c.Call(context.Background(), "ListShelves", request, response)
+		request := &servicemanagement.ListServicesRequest{}
+		response := &servicemanagement.ListServicesResponse{}
+		err = c.Call(context.Background(), "ListServices", request, response)
 		if err != nil {
 			fmt.Println(err.Error())
 		} else {
 			fmt.Println(proto.MarshalTextString(response))
 		}
 	} else if os.Args[1] == "grpc" {
-		c := NewGrpcClient(context.Background(), use_jwt, aud)
-		request := &library.ListShelvesRequest{}
-		response, err := c.ListShelves(context.Background(), request)
+		c := NewGrpcClient(context.Background(), use_jwt, getAudience())
+		request := &servicemanagement.ListServicesRequest{}
+		response, err := c.ListServices(context.Background(), request)
 		if err != nil {
 			fmt.Println(err.Error())
 		} else {
 			fmt.Println(proto.MarshalTextString(response))
 		}
-	} else {
+	} else  {
 		fmt.Println("Usage: cmd [grpc|protorpc]")
 	}
 }

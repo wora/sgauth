@@ -42,12 +42,26 @@ func DefaultTokenSource(ctx context.Context, scope ...string) (internal.TokenSou
 
 // NewApplicationDefault returns "Application Default Credentials". For more
 // detail, see https://developers.google.com/accounts/docs/application-default-credentials.
-func NewApplicationDefault(ctx context.Context, scope ...string) (credentials.PerRPCCredentials, error) {
+func NewGrpcApplicationDefault(ctx context.Context, scope ...string) (credentials.PerRPCCredentials, error) {
 	t, err := DefaultTokenSource(ctx, scope...)
 	if err != nil {
 		return nil, err
 	}
 	return internal.GrpcTokenSource{t}, nil
+}
+
+// NewApplicationDefault returns "Application Default Credentials". For more
+// detail, see https://developers.google.com/accounts/docs/application-default-credentials.
+func NewGrpcJWT(ctx context.Context, aud string) (credentials.PerRPCCredentials, error) {
+	creds, err := FindDefaultCredentials(ctx, []string{})
+	if creds != nil {
+		ts, err := JWTAccessTokenSourceFromJSON(creds.JSON, aud)
+		if (err != nil) {
+			return nil, err
+		}
+		return internal.GrpcTokenSource{ts}, nil
+	}
+	return nil, err
 }
 
 func FindDefaultCredentials(ctx context.Context, scopes []string) (*Credentials, error) {

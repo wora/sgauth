@@ -128,3 +128,21 @@ func ReuseTokenSource(t *Token, src TokenSource) TokenSource {
 		new: src,
 	}
 }
+
+// TokenSource returns a TokenSource that returns t until t expires,
+// automatically refreshing it as necessary using the provided context.
+//
+// Most users will use Config.Client instead.
+func (c *Config) TokenSource(ctx context.Context, t *Token) TokenSource {
+	tkr := &tokenRefresher{
+		ctx:  ctx,
+		conf: c,
+	}
+	if t != nil {
+		tkr.refreshToken = t.RefreshToken
+	}
+	return &reuseTokenSource{
+		t:   t,
+		new: tkr,
+	}
+}
