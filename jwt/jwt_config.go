@@ -1,11 +1,10 @@
-package credentials
+package jwt
 
 import (
 	"errors"
 	"fmt"
+	"github.com/shinfan/sgauth/internal"
 	"golang.org/x/net/context"
-	"github.com/shinfan/sgauth/oauth2/internal"
-	"github.com/shinfan/sgauth/oauth2/jwt"
 )
 
 // DefaultTokenURL is Google's OAuth 2.0 token URL to use with the JWT flow.
@@ -13,12 +12,12 @@ const DefaultTokenURL = "https://accounts.google.com/o/oauth2/token"
 
 // JSON key file types.
 const (
-	serviceAccountKey  = "service_account"
-	userCredentialsKey = "authorized_user"
+	ServiceAccountKey  = "service_account"
+	UserCredentialsKey = "authorized_user"
 )
 
 // credentialsFile is the unmarshalled representation of a credentials file.
-type credentialsFile struct {
+type CredentialsFile struct {
 	Type string `json:"type"` // serviceAccountKey or userCredentialsKey
 
 	// Service Account fields
@@ -35,8 +34,8 @@ type credentialsFile struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func (f *credentialsFile) jwtConfig(scopes []string) *jwt.JWTConfig {
-	cfg := &jwt.JWTConfig{
+func (f *CredentialsFile) jwtConfig(scopes []string) *JWTConfig {
+	cfg := &JWTConfig{
 		Email:        f.ClientEmail,
 		PrivateKey:   []byte(f.PrivateKey),
 		PrivateKeyID: f.PrivateKeyID,
@@ -49,9 +48,9 @@ func (f *credentialsFile) jwtConfig(scopes []string) *jwt.JWTConfig {
 	return cfg
 }
 
-func (f *credentialsFile) tokenSource(ctx context.Context, scopes []string) (internal.TokenSource, error) {
+func (f *CredentialsFile) tokenSource(ctx context.Context, scopes []string) (internal.TokenSource, error) {
 	switch f.Type {
-	case serviceAccountKey:
+	case ServiceAccountKey:
 		cfg := f.jwtConfig(scopes)
 		return cfg.TokenSource(ctx), nil
 	case "":

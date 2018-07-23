@@ -1,11 +1,11 @@
-package oauth2
+package sgauth
 
 import (
 	"errors"
 	"io"
 	"net/http"
 	"sync"
-	"github.com/shinfan/sgauth/oauth2/internal"
+	"github.com/shinfan/sgauth/internal"
 )
 
 // Transport is an http.RoundTripper that makes OAuth 2.0 HTTP requests,

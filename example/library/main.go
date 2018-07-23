@@ -7,7 +7,7 @@ import (
 	"github.com/wora/protorpc/client"
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/genproto/googleapis/example/library/v1"
-	"github.com/shinfan/sgauth/oauth2"
+	"github.com/shinfan/sgauth"
 	"os"
 	"net/http"
 	"google.golang.org/grpc"
@@ -17,9 +17,9 @@ func NewHTTPClient(ctx context.Context, baseUrl string, use_jwt bool, aud string
 	var http *http.Client
 	var err error
 	if (use_jwt) {
-		http, err = oauth2.JWTClient(ctx, aud,"https://www.googleapis.com/auth/xapi.zoo")
+		http, err = sgauth.JWTClient(ctx, aud,"https://www.googleapis.com/auth/xapi.zoo")
 	} else {
-		http, err = oauth2.DefaultClient(ctx, "https://www.googleapis.com/auth/xapi.zoo")
+		http, err = sgauth.DefaultClient(ctx, "https://www.googleapis.com/auth/xapi.zoo")
 	}
 	if err != nil {
 		return nil, err
@@ -35,9 +35,9 @@ func NewHTTPClient(ctx context.Context, baseUrl string, use_jwt bool, aud string
 func NewGrpcClient(ctx context.Context, service_name string, use_jwt bool, aud string) (library.LibraryServiceClient) {
 	var conn *grpc.ClientConn
 	if (use_jwt) {
-		conn, _ = oauth2.JWTGrpcConn(ctx, service_name, "443",  aud)
+		conn, _ = sgauth.JWTGrpcConn(ctx, service_name, "443",  aud)
 	} else {
-		conn, _ = oauth2.DefaultGrpcConn(ctx,
+		conn, _ = sgauth.DefaultGrpcConn(ctx,
 			service_name, "443", "https://www.googleapis.com/auth/xapi.zoo")
 	}
 	return library.NewLibraryServiceClient(conn)
@@ -92,7 +92,8 @@ func main() {
 
 	if contains(os.Args, "--jwt") {
 		use_jwt = true;
-		aud = fmt.Sprintf("https://%s/%s", service_name, api_name)
+		aud = fmt.Sprintf("https://%s/%s", service_name, getFlagValue("--api_name"))
+		println(aud)
 	}
 
 	if contains(os.Args, "--api_name") {

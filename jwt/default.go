@@ -1,32 +1,14 @@
-// Copyright 2015 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-package credentials
+package jwt
 
 import (
-	"encoding/json"
+	"google.golang.org/grpc/credentials"
+	"context"
+	"github.com/shinfan/sgauth/internal"
+	"os"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"golang.org/x/net/context"
-	"github.com/shinfan/sgauth/oauth2/internal"
-	"google.golang.org/grpc/credentials"
+	"encoding/json"
 )
-
-// Credentials holds Google credentials, including "Application Default Credentials".
-// For more details, see:
-// https://developers.google.com/accounts/docs/application-default-credentials
-type Credentials struct {
-	ProjectID   string // may be empty
-	TokenSource internal.TokenSource
-
-	// JSON contains the raw bytes from a JSON credentials file.
-	// This field may be nil if authentication is provided by the
-	// environment and not with a credentials file, e.g. when code is
-	// running on Google Cloud Platform.
-	JSON []byte
-}
 
 // DefaultTokenSource returns the token source for
 // "Application Default Credentials".
@@ -64,7 +46,7 @@ func NewGrpcJWT(ctx context.Context, aud string) (credentials.PerRPCCredentials,
 	return nil, err
 }
 
-func FindDefaultCredentials(ctx context.Context, scopes []string) (*Credentials, error) {
+func FindDefaultCredentials(ctx context.Context, scopes []string) (*internal.Credentials, error) {
 	const envVar = "GOOGLE_APPLICATION_CREDENTIALS"
 	if filename := os.Getenv(envVar); filename != "" {
 		creds, err := readCredentialsFile(ctx, filename, scopes)
@@ -78,7 +60,7 @@ func FindDefaultCredentials(ctx context.Context, scopes []string) (*Credentials,
 	return nil, fmt.Errorf("google: could not find default credentials. See %v for more information.", url)
 }
 
-func readCredentialsFile(ctx context.Context, filename string, scopes []string) (*Credentials, error) {
+func readCredentialsFile(ctx context.Context, filename string, scopes []string) (*internal.Credentials, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -86,8 +68,8 @@ func readCredentialsFile(ctx context.Context, filename string, scopes []string) 
 	return credentialsFromJSON(ctx, b, scopes)
 }
 
-func credentialsFromJSON(ctx context.Context, jsonData []byte, scopes []string) (*Credentials, error) {
-	var f credentialsFile
+func credentialsFromJSON(ctx context.Context, jsonData []byte, scopes []string) (*internal.Credentials, error) {
+	var f CredentialsFile
 	if err := json.Unmarshal(jsonData, &f); err != nil {
 		return nil, err
 	}
@@ -95,7 +77,7 @@ func credentialsFromJSON(ctx context.Context, jsonData []byte, scopes []string) 
 	if err != nil {
 		return nil, err
 	}
-	return &Credentials{
+	return &internal.Credentials{
 		ProjectID:   f.ProjectID,
 		TokenSource: ts,
 		JSON:        jsonData,

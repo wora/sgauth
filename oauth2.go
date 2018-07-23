@@ -1,10 +1,10 @@
-package oauth2
+package sgauth
 
 import (
 	"net/http"
-	"github.com/shinfan/sgauth/oauth2/internal"
+	"github.com/shinfan/sgauth/internal"
+	"github.com/shinfan/sgauth/jwt"
 	"golang.org/x/net/context"
-	"github.com/shinfan/sgauth/oauth2/credentials"
 	"google.golang.org/grpc"
 	"crypto/x509"
 	grpccredentials "google.golang.org/grpc/credentials"
@@ -32,7 +32,7 @@ func DefaultGrpcConn(ctx context.Context, host string, port string, scope ...str
 	pool, _ := x509.SystemCertPool()
 	// error handling omitted
 	creds := grpccredentials.NewClientTLSFromCert(pool, "")
-	perRPC, _ := credentials.NewGrpcApplicationDefault(ctx, scope...)
+	perRPC, _ := jwt.NewGrpcApplicationDefault(ctx, scope...)
 	return grpc.Dial(
 		fmt.Sprintf("%s:%s", host, port),
 		grpc.WithTransportCredentials(creds),
@@ -46,7 +46,7 @@ func JWTGrpcConn(ctx context.Context, host string, port string, aud string) (*gr
 	pool, _ := x509.SystemCertPool()
 	// error handling omitted
 	creds := grpccredentials.NewClientTLSFromCert(pool, "")
-	perRPC, _ := credentials.NewGrpcJWT(ctx, aud)
+	perRPC, _ := jwt.NewGrpcJWT(ctx, aud)
 	return grpc.Dial(
 		fmt.Sprintf("%s:%s", host, port),
 		grpc.WithTransportCredentials(creds),
@@ -57,7 +57,7 @@ func JWTGrpcConn(ctx context.Context, host string, port string, aud string) (*gr
 // DefaultClient returns an HTTP Client that uses the
 // DefaultTokenSource to obtain authentication credentials.
 func DefaultClient(ctx context.Context, scope ...string) (*http.Client, error) {
-	ts, err := credentials.DefaultTokenSource(ctx, scope...)
+	ts, err := jwt.DefaultTokenSource(ctx, scope...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,9 +67,9 @@ func DefaultClient(ctx context.Context, scope ...string) (*http.Client, error) {
 // DefaultClient returns an HTTP Client that uses the
 // DefaultTokenSource to obtain authentication credentials.
 func JWTClient(ctx context.Context, aud string, scope ...string) (*http.Client, error) {
-	creds, err := credentials.FindDefaultCredentials(ctx, scope)
+	creds, err := jwt.FindDefaultCredentials(ctx, scope)
 	if creds != nil {
-		ts, err := credentials.JWTAccessTokenSourceFromJSON(creds.JSON, aud)
+		ts, err := jwt.JWTAccessTokenSourceFromJSON(creds.JSON, aud)
 		if (err != nil) {
 			return nil, err
 		}

@@ -1,4 +1,4 @@
-package credentials
+package jwt
 
 import (
 	"crypto/rsa"
@@ -6,22 +6,24 @@ import (
 	"time"
 
 	"golang.org/x/oauth2/jws"
-	"github.com/shinfan/sgauth/oauth2/internal"
 	"encoding/json"
-	"github.com/shinfan/sgauth/oauth2/jwt"
+	"github.com/shinfan/sgauth/internal"
+	"encoding/pem"
+	"crypto/x509"
+	"errors"
 )
 
 // JWTConfigFromJSON uses a Google Developers service account JSON key file to read
 // the credentials that authorize and authenticate the requests.
 // Create a service account on "Credentials" for your project at
 // https://console.developers.google.com to download a JSON key file.
-func JWTConfigFromJSON(jsonKey []byte, scope ...string) (*jwt.JWTConfig, error) {
-	var f credentialsFile
+func JWTConfigFromJSON(jsonKey []byte, scope ...string) (*JWTConfig, error) {
+	var f CredentialsFile
 	if err := json.Unmarshal(jsonKey, &f); err != nil {
 		return nil, err
 	}
-	if f.Type != serviceAccountKey {
-		return nil, fmt.Errorf("google: read JWT from JSON credentials: 'type' field is %q (expected %q)", f.Type, serviceAccountKey)
+	if f.Type != ServiceAccountKey {
+		return nil, fmt.Errorf("google: read JWT from JSON credentials: 'type' field is %q (expected %q)", f.Type, ServiceAccountKey)
 	}
 	scope = append([]string(nil), scope...) // copy
 	return f.jwtConfig(scope), nil
@@ -41,7 +43,7 @@ func JWTAccessTokenSourceFromJSON(jsonKey []byte, audience string) (internal.Tok
 	if err != nil {
 		return nil, fmt.Errorf("google: could not parse JSON key: %v", err)
 	}
-	pk, err := internal.ParseKey(cfg.PrivateKey)
+	pk, err := parseKey(cfg.PrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("google: could not parse key: %v", err)
 	}
@@ -85,3 +87,29 @@ func (ts *jwtAccessTokenSource) Token() (*internal.Token, error) {
 	}
 	return &internal.Token{AccessToken: msg, TokenType: "Bearer", Expiry: exp}, nil
 }
+
+
+// ParseKey converts the binary contents of a private key file
+// to an *rsa.PrivateKey. It detects whether the private key is in a
+// PEM container or not. If so, it extracts the the private key
+// from PEM container before conversion. It only supports PEM
+// containers with no passphrase.
+func parseKey(key []byte) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode(key)
+	if block != nil {
+		key = block.Bytes
+	}
+	parsedKey, err := x509.ParsePKCS8PrivateKey(key)
+	if err != nil {
+		parsedKey, err = x509.ParsePKCS1PrivateKey(key)
+		if err != nil {
+			return nil, fmt.Errorf("private key should be a PEM or plain PKSC1 or PKCS8; parse error: %v", err)
+		}
+	}
+	parsed, ok := parsedKey.(*rsa.PrivateKey)
+	if !ok {
+		return nil, errors.New("private key is invalid")
+	}
+	return parsed, nil
+}
+
