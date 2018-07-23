@@ -84,15 +84,23 @@ func main() {
 
 	if contains(os.Args, "--service_name") {
 		service_name = getFlagValue("--service_name")
-	}
-
-	if contains(os.Args, "--api_name") {
-		api_name = getFlagValue("--api_name")
+	} else {
+		println("Error: --service_name is required")
+		printUsage()
+		return
 	}
 
 	if contains(os.Args, "--jwt") {
 		use_jwt = true;
 		aud = fmt.Sprintf("https://%s/%s", service_name, api_name)
+	}
+
+	if contains(os.Args, "--api_name") {
+		api_name = getFlagValue("--api_name")
+	} else if (use_jwt || os.Args[1] == "protorpc") {
+		println("Error: --api_name is required in JWT or ProtoRPC mode")
+		printUsage()
+		return
 	}
 
 	if os.Args[1] == "protorpc" {
