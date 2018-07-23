@@ -1,8 +1,8 @@
-Google Authenticator Examples
+Google Authenticator(GA) Prototype
 -------
 ## Installation
 
-To install the Google Authenticator and its examples, run:
+To install the Google Authenticator prototype, run:
 ```
 go get github.com/shinfan/sgauth/example/library
 ```
