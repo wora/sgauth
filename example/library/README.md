@@ -17,30 +17,29 @@ Currently Google Authenticator reads the service account JSON credential file fr
 ## Command-line Usage
 The demo main has the following usage pattern:
 ```
-go run main.go [protorpc|grpc] [--jwt aud] [baseUrl]
+go run main.go protorpc|grpc [--jwt] --service_name {service_name} [--api_name {api_name}]
 ```
 where:
 
-`[protorpc|grpc]` is the selector between ProtobufRPC and gRPC protocols.
-
-`[--jwt]` is the flag if you want to use client-signed JWT token without OAuth2.0. To use JWT token you need to provide an `aud` field. For more information about how to construct the `aud` field please read: [Service account authorization without OAuth](https://developers.google.com/identity/protocols/OAuth2ServiceAccount)
-
-`[baseUrl]` is the base HTTP URL used for ProtobufRPC. You don't need to specify this field for gRPC.
+- `protorpc|grpc` *[REQUIRED]* is the selector between ProtobufRPC and gRPC protocols. 
+- `[--jwt]` is the flag if you want to use client-signed JWT token without OAuth2.0. For more information about JWT token please read: [Service account authorization without OAuth](https://developers.google.com/identity/protocols/OAuth2ServiceAccount)
+- `[--service_name]` *[REQUIRED]* is the full host name of the API service. e.g. test-xxiang-library-example.sandbox.googleapis.com 
+- `[--api_name]` is the full API name. e.g. google.example.library.v1.LibraryService. Tjos field is only required for `protorpc` option.
 
 ## Sample Usage
 Currently the Library API **only supports TestGaia**
 
 #### ProtoRPC
 ```
-go run main.go protorpc https://test-xxiang-library-example.sandbox.googleapis.com/\$rpc/google.example.library.v1.LibraryService/
+go run main.go protorpc --service_name test-xxiang-library-example.sandbox.googleapis.com --api_name google.example.library.v1.LibraryService
 ```
 #### gRPC
 ```
-go run main.go grpc
+go run main.go grpc --service_name test-xxiang-library-example.sandbox.googleapis.com
 ```
 
 #### JWT Token
-To authorize with JWT token, you can specify the `--jwt` flag, for example:
+To authorize with JWT token, you only need specify the extra `--jwt` flag, for example:
 ```
-go run main.go protorpc --jwt https://test-xxiang-library-example.sandbox.googleapis.com/google.example.library.v1.LibraryService https://test-xxiang-library-example.sandbox.googleapis.com/\$rpc/google.example.library.v1.LibraryService/
+go run main.go grpc --jwt --service_name test-xxiang-library-example.sandbox.googleapis.com
 ```
