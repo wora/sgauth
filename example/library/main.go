@@ -9,27 +9,19 @@ import (
 	"google.golang.org/genproto/googleapis/example/library/v1"
 	"github.com/shinfan/sgauth"
 	"os"
-	"net/http"
 	"google.golang.org/grpc"
 )
 
-func NewHTTPClient(ctx context.Context, baseUrl string, use_jwt bool, aud string) (*client.Client, error) {
-	var http *http.Client
-	var err error
-	if (use_jwt) {
-		http, err = sgauth.JWTClient(ctx, aud,"https://www.googleapis.com/auth/xapi.zoo")
-	} else {
-		http, err = sgauth.DefaultClient(ctx, "https://www.googleapis.com/auth/xapi.zoo")
+func NewHTTPClient(ctx context.Context, service_name string, api_name string, use_jwt bool) (*client.Client, error) {
+	var credentials = &sgauth.Credentials{
+		ServiceAccount: &sgauth.ServiceAccount{
+			EnableOAuth: !use_jwt,
+			ServiceName: service_name,
+			APIName: api_name,
+			Scopes: []string{"https://www.googleapis.com/auth/xapi.zoo"},
+		},
 	}
-	if err != nil {
-		return nil, err
-	}
-	c := &client.Client{
-		HTTP:        http,
-		BaseURL:     baseUrl,
-		UserAgent:   "protorpc/0.1",
-	}
-	return c, nil
+	return client.NewClient(ctx, credentials)
 }
 
 func NewGrpcClient(ctx context.Context, service_name string, use_jwt bool, aud string) (library.LibraryServiceClient) {
@@ -110,8 +102,7 @@ func main() {
 			return
 		}
 
-		baseUrl := fmt.Sprintf("https://%s/$rpc/%s/", service_name, api_name)
-		c, err := NewHTTPClient(context.Background(), baseUrl, use_jwt, aud)
+		c, err := NewHTTPClient(context.Background(), service_name, api_name, use_jwt)
 		if err != nil {
 			fmt.Println(err.Error())
 			return

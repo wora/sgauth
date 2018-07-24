@@ -14,13 +14,29 @@ import (
 // "Application Default Credentials".
 // It is a shortcut for FindDefaultCredentials(ctx, scope).TokenSource.
 func DefaultTokenSource(ctx context.Context, scope ...string) (internal.TokenSource, error) {
-	creds, err := FindDefaultCredentials(ctx, scope)
+	creds, err := applicationDefaultCredentials(ctx, scope)
 	if err != nil {
 		return nil, err
 	}
 	return creds.TokenSource, nil
 }
 
+func OAuthJSONTokenSource(ctx context.Context, filename string, scopes []string) (internal.TokenSource, error) {
+	creds, err := findCredentials(ctx, filename, scopes)
+	if err != nil {
+		return nil, err
+	}
+	return creds.TokenSource, nil
+}
+
+func JWTTokenSource(ctx context.Context, filename string, aud string, scopes []string) (internal.TokenSource, error) {
+	creds, err := findCredentials(ctx, filename, scopes)
+	if err != nil {
+		return nil, err
+	}
+	ts, err := JWTAccessTokenSourceFromJSON(creds.JSON, aud)
+	return ts, err
+}
 
 // NewApplicationDefault returns "Application Default Credentials". For more
 // detail, see https://developers.google.com/accounts/docs/application-default-credentials.
@@ -35,7 +51,7 @@ func NewGrpcApplicationDefault(ctx context.Context, scope ...string) (credential
 // NewApplicationDefault returns "Application Default Credentials". For more
 // detail, see https://developers.google.com/accounts/docs/application-default-credentials.
 func NewGrpcJWT(ctx context.Context, aud string) (credentials.PerRPCCredentials, error) {
-	creds, err := FindDefaultCredentials(ctx, []string{})
+	creds, err := applicationDefaultCredentials(ctx, []string{})
 	if creds != nil {
 		ts, err := JWTAccessTokenSourceFromJSON(creds.JSON, aud)
 		if (err != nil) {
@@ -46,7 +62,7 @@ func NewGrpcJWT(ctx context.Context, aud string) (credentials.PerRPCCredentials,
 	return nil, err
 }
 
-func FindDefaultCredentials(ctx context.Context, scopes []string) (*internal.Credentials, error) {
+func applicationDefaultCredentials(ctx context.Context, scopes []string) (*internal.Credentials, error) {
 	const envVar = "GOOGLE_APPLICATION_CREDENTIALS"
 	if filename := os.Getenv(envVar); filename != "" {
 		creds, err := readCredentialsFile(ctx, filename, scopes)
@@ -58,6 +74,14 @@ func FindDefaultCredentials(ctx context.Context, scopes []string) (*internal.Cre
 	// None are found; return helpful error.
 	const url = "https://developers.google.com/accounts/docs/application-default-credentials"
 	return nil, fmt.Errorf("google: could not find default credentials. See %v for more information.", url)
+}
+
+func findCredentials(ctx context.Context, filename string, scopes []string) (*internal.Credentials, error) {
+	if (filename != "") {
+		return readCredentialsFile(ctx, filename, scopes)
+	} else {
+		return applicationDefaultCredentials(ctx, scopes)
+	}
 }
 
 func readCredentialsFile(ctx context.Context, filename string, scopes []string) (*internal.Credentials, error) {
