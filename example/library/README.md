@@ -17,15 +17,18 @@ Currently Google Authenticator reads the service account JSON credential file fr
 ## Command-line Usage
 The demo main has the following usage pattern:
 ```
-go run *.go protorpc|grpc --aud|scope {value} --host {value} [--api_name {value}]
+go run *.go protorpc|grpc --host {value} \
+    [--aud {value}] [--scope {value}] [--api_name {value}] [--api_key {value}]
 ```
 where:
 
-- `protorpc|grpc` *[REQUIRED]* is the selector between ProtobufRPC and gRPC protocols. 
-- `[--aud|scope]` is the value of scope if you want to use OAuth or audience if you use client-signed JWT token.
+- `protorpc|grpc` *[REQUIRED]* is the selector between ProtobufRPC and gRPC protocols.
+- `--host` *[REQUIRED]* is the full host name of the API service. e.g. test-xxiang-library-example.sandbox.googleapis.com  
+- `[--scope]` is the value of scope if you use OAuth2.0
+- `[--aud]` is the value of audience if you use client-signed JWT token.
 For more information about JWT token please read: [Service account authorization without OAuth](https://developers.google.com/identity/protocols/OAuth2ServiceAccount)
-- `[--host]` *[REQUIRED]* is the full host name of the API service. e.g. test-xxiang-library-example.sandbox.googleapis.com 
-- `[--api_name]` is the full API name. e.g. google.example.library.v1.LibraryService. Tjos field is only required when `protorpc` mode is selected.
+- `[--api_key]` is the Google API key.
+- `[--api_name]` is the full API name. e.g. google.example.library.v1.LibraryService. This field is only required when `protorpc` mode is selected.
 
 ## Sample Usage
 
@@ -35,11 +38,13 @@ The following commands run the example with the Test GAIA instance so that your 
 
 #### ProtoRPC
 ```
-go run *.go protorpc --host test-xxiang-library-example.sandbox.googleapis.com --api_name google.example.library.v1.LibraryService
+go run *.go protorpc --host test-xxiang-library-example.sandbox.googleapis.com \
+--api_name google.example.library.v1.LibraryService
 ```
 #### gRPC
 ```
-go run *.go grpc --service_name test-xxiang-library-example.sandbox.googleapis.com --api_name google.example.library.v1.LibraryService 
+go run *.go grpc --service_name test-xxiang-library-example.sandbox.googleapis.com \
+--api_name google.example.library.v1.LibraryService 
 ```
 
 Note: Both sample commands above uses JWT auth token by default. The audience is auto-computed based on the host and api_name.
@@ -48,12 +53,28 @@ You can always set the audience explicitly by using the `--aud` flag.
 #### OAuth
 To authorize with OAuth, you only need specify the extra `--scope` flag, for example:
 ```
-go run *.go grpc --scope https://www.googleapis.com/auth/xapi.zoo --host test-xxiang-library-example.sandbox.googleapis.com
+go run *.go grpc --scope https://www.googleapis.com/auth/xapi.zoo \
+--host test-xxiang-library-example.sandbox.googleapis.com
+```
+
+#### API Key
+
+To access the API with an API key:
+```
+go run *.go protorpc --host test-xxiang-library-example.sandbox.googleapis.com \
+--api_name google.example.library.v1.LibraryService \
+--api_key ANVavNK3PDM8pIprU7xmF4BlEvmKn37f4_N7D3k
+```
+or if you wanna use gRPC:
+```
+go run *.go grpc --host test-xxiang-library-example.sandbox.googleapis.com \
+--api_key ANVavNK3PDM8pIprU7xmF4BlEvmKn37f4_N7D3k
 ```
 
 ### Work with Prod GAIA
 
 If you want to work with Prod GAIA, you can switch to use the public Library API service and everything else should be the same. e.g.
 ```
-go run *.go grpc --host library-example.googleapis.com --scope https://www.googleapis.com/auth/xapi.zoo
+go run *.go grpc --host library-example.googleapis.com \
+--scope https://www.googleapis.com/auth/xapi.zoo
 ```

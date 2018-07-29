@@ -11,6 +11,7 @@ var (
 	kAud = "aud"
 	kHost = "host"
 	kApiName = "api_name"
+	kApiKey = "api_key"
 )
 
 func contains(arr []string, str string) bool {
@@ -47,6 +48,7 @@ func parseArguments() (map[string]string, error) {
 	args[kAud] = ""
 	args[kHost] = ""
 	args[kApiName] = ""
+	args[kApiKey] = ""
 
 	if contains(os.Args, "--host") {
 		args[kHost] = getFlagValue("--host")
@@ -62,13 +64,17 @@ func parseArguments() (map[string]string, error) {
 		args[kScope] = getFlagValue("--scope")
 	}
 
+	if contains(os.Args, "--api_key") {
+		args[kApiKey] = getFlagValue("--api_key")
+	}
+
 	if contains(os.Args, "--api_name") {
 		args[kApiName] = getFlagValue("--api_name")
 	} else if (os.Args[1] == "protorpc") {
 		return nil, errors.New("Invalid argument: --api_name is required for ProtoRPC mode")
 	}
 
-	if (args[kScope] == "" && args[kAud] == "") {
+	if args[kApiKey] == "" && args[kScope] == "" && args[kAud] == "" {
 		if (args[kApiName] != "") {
 			args[kAud] = fmt.Sprintf("https://%s/%s", args[kHost], args[kApiName])
 		} else {

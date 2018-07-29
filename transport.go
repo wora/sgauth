@@ -19,6 +19,8 @@ type Transport struct {
 	// Authorization headers.
 	Source internal.TokenSource
 
+	APIKey string
+
 	// Base is the base RoundTripper used to make HTTP requests.
 	// If nil, http.DefaultTransport is used.
 	Base http.RoundTripper
@@ -38,17 +40,20 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			}
 		}()
 	}
-
-	if t.Source == nil {
-		return nil, errors.New("oauth2: Transport's Source is nil")
-	}
-	token, err := t.Source.Token()
-	if err != nil {
-		return nil, err
-	}
-
+	
 	req2 := cloneRequest(req) // per RoundTripper contract
-	token.SetAuthHeader(req2)
+	if t.APIKey != "" {
+		req2.Header.Set("X-Goog-Api-Key", t.APIKey)
+	} else {
+		if t.Source == nil {
+			return nil, errors.New("oauth2: Transport's Source is nil")
+		}
+		token, err := t.Source.Token()
+		if err != nil {
+			return nil, err
+		}
+		token.SetAuthHeader(req2)
+	}
 	t.setModReq(req, req2)
 	res, err := t.base().RoundTrip(req2)
 

@@ -10,7 +10,11 @@ import (
 )
 
 func createSettings(args map[string]string) (*sgauth.Settings) {
-	if args[kAud] != "" {
+	if args[kApiKey] != "" {
+		return &sgauth.Settings{
+			APIKey: args[kApiKey],
+		}
+	} else if args[kAud] != "" {
 		return &sgauth.Settings{
 			Audience: args[kAud],
 		}

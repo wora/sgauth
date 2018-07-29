@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"fmt"
+	"github.com/shinfan/sgauth/internal"
 )
 
 func NewGrpcConn(ctx context.Context, settings *Settings, host string, port string) (*grpc.ClientConn, error) {
@@ -21,7 +22,10 @@ func NewGrpcConn(ctx context.Context, settings *Settings, host string, port stri
 	// error handling omitted
 	creds := credentials.NewClientTLSFromCert(pool, "")
 	var perRPC credentials.PerRPCCredentials
-	if settings.Scope != "" {
+
+	if settings.APIKey != "" {
+		perRPC = internal.GrpcApiKey{Value: settings.APIKey}
+	} else if settings.Scope != "" {
 		perRPC, _ = jwt.NewGrpcApplicationDefault(ctx, settings.Scope)
 	} else {
 
