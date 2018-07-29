@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"github.com/shinfan/sgauth/jwt"
 	"golang.org/x/net/context"
-	"fmt"
+	"strings"
 )
 
 // createClient creates an *http.Client from a TokenSource.
@@ -26,12 +26,15 @@ var defaultScope = "https://www.googleapis.com/auth/cloud-platform"
 
 // DefaultClient returns an HTTP Client that uses the
 // DefaultTokenSource to obtain authentication credentials.
-func NewHTTPClient(ctx context.Context, credentials *Credentials) (*http.Client, error) {
+func NewHTTPClient(ctx context.Context, settings *Settings) (*http.Client, error) {
 	var ts internal.TokenSource
 	var err error
-	if (credentials != nil) {
-		if (credentials.ServiceAccount != nil) {
-			ts, err = serviceAccountTokenSource(ctx, credentials.ServiceAccount)
+	if settings != nil {
+		if settings.Scope != "" {
+			ts, err = jwt.OAuthJSONTokenSource(ctx, settings.CredentialsJSON, strings.Split(settings.Scope, " "))
+		} else {
+			ts, err = jwt.JWTTokenSource(
+				ctx, settings.CredentialsJSON, settings.Audience, []string{})
 		}
 	} else {
 		ts, err = jwt.DefaultTokenSource(ctx, defaultScope)
@@ -40,13 +43,4 @@ func NewHTTPClient(ctx context.Context, credentials *Credentials) (*http.Client,
 		}
 	}
 	return createClient(ts), nil
-}
-
-func serviceAccountTokenSource(ctx context.Context, account *ServiceAccount)(internal.TokenSource, error) {
-	if (account.EnableOAuth) {
-		return jwt.OAuthJSONTokenSource(ctx, account.JSONFile, account.Scopes)
-	} else {
-		aud := fmt.Sprintf("https://%s/%s", account.ServiceName, account.APIName)
-		return jwt.JWTTokenSource(ctx, account.JSONFile, aud, account.Scopes)
-	}
 }

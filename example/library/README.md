@@ -17,14 +17,15 @@ Currently Google Authenticator reads the service account JSON credential file fr
 ## Command-line Usage
 The demo main has the following usage pattern:
 ```
-go run main.go protorpc|grpc [--jwt] --service_name {service_name} [--api_name {api_name}]
+go run *.go protorpc|grpc --aud|scope {value} --host {value} [--api_name {value}]
 ```
 where:
 
 - `protorpc|grpc` *[REQUIRED]* is the selector between ProtobufRPC and gRPC protocols. 
-- `[--jwt]` is the flag if you want to use client-signed JWT token without OAuth2.0. For more information about JWT token please read: [Service account authorization without OAuth](https://developers.google.com/identity/protocols/OAuth2ServiceAccount)
-- `[--service_name]` *[REQUIRED]* is the full host name of the API service. e.g. test-xxiang-library-example.sandbox.googleapis.com 
-- `[--api_name]` is the full API name. e.g. google.example.library.v1.LibraryService. Tjos field is only required when `protorpc` or `jwt` option is selected.
+- `[--aud|scope]` is the value of scope if you want to use OAuth or audience if you use client-signed JWT token.
+For more information about JWT token please read: [Service account authorization without OAuth](https://developers.google.com/identity/protocols/OAuth2ServiceAccount)
+- `[--host]` *[REQUIRED]* is the full host name of the API service. e.g. test-xxiang-library-example.sandbox.googleapis.com 
+- `[--api_name]` is the full API name. e.g. google.example.library.v1.LibraryService. Tjos field is only required when `protorpc` mode is selected.
 
 ## Sample Usage
 
@@ -34,22 +35,25 @@ The following commands run the example with the Test GAIA instance so that your 
 
 #### ProtoRPC
 ```
-go run main.go protorpc --service_name test-xxiang-library-example.sandbox.googleapis.com --api_name google.example.library.v1.LibraryService
+go run *.go protorpc --host test-xxiang-library-example.sandbox.googleapis.com --api_name google.example.library.v1.LibraryService
 ```
 #### gRPC
 ```
-go run main.go grpc --service_name test-xxiang-library-example.sandbox.googleapis.com
+go run *.go grpc --service_name test-xxiang-library-example.sandbox.googleapis.com --api_name google.example.library.v1.LibraryService 
 ```
-#### JWT Token
-To authorize with JWT token, you only need specify the extra `--jwt` flag, for example:
+
+Note: Both sample commands above uses JWT auth token by default. The audience is auto-computed based on the host and api_name.
+You can always set the audience explicitly by using the `--aud` flag.
+
+#### OAuth
+To authorize with OAuth, you only need specify the extra `--scope` flag, for example:
 ```
-go run main.go grpc --jwt --service_name test-xxiang-library-example.sandbox.googleapis.com -api_name google.example.library.v1.LibraryService
+go run *.go grpc --scope https://www.googleapis.com/auth/xapi.zoo --host test-xxiang-library-example.sandbox.googleapis.com
 ```
-Note: `api_name` is required for `jwt` option.
 
 ### Work with Prod GAIA
 
 If you want to work with Prod GAIA, you can switch to use the public Library API service and everything else should be the same. e.g.
 ```
-go run main.go grpc --service_name library-example.googleapis.com
+go run *.go grpc --host library-example.googleapis.com --scope https://www.googleapis.com/auth/xapi.zoo
 ```

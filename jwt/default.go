@@ -21,16 +21,17 @@ func DefaultTokenSource(ctx context.Context, scope ...string) (internal.TokenSou
 	return creds.TokenSource, nil
 }
 
-func OAuthJSONTokenSource(ctx context.Context, filename string, scopes []string) (internal.TokenSource, error) {
-	creds, err := findCredentials(ctx, filename, scopes)
+func OAuthJSONTokenSource(ctx context.Context, json string, scopes []string) (internal.TokenSource, error) {
+	creds, err := findJSONCredentials(ctx, json, scopes)
 	if err != nil {
 		return nil, err
 	}
 	return creds.TokenSource, nil
+
 }
 
-func JWTTokenSource(ctx context.Context, filename string, aud string, scopes []string) (internal.TokenSource, error) {
-	creds, err := findCredentials(ctx, filename, scopes)
+func JWTTokenSource(ctx context.Context, json string, aud string, scopes []string) (internal.TokenSource, error) {
+	creds, err := findJSONCredentials(ctx, json, scopes)
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +63,16 @@ func NewGrpcJWT(ctx context.Context, aud string) (credentials.PerRPCCredentials,
 	return nil, err
 }
 
+func findJSONCredentials(ctx context.Context, json string, scopes[]string) (*internal.Credentials, error) {
+	if json != "" {
+		return credentialsFromJSON(ctx, []byte(json), scopes)
+
+	} else {
+		return applicationDefaultCredentials(ctx, scopes)
+
+	}
+}
+
 func applicationDefaultCredentials(ctx context.Context, scopes []string) (*internal.Credentials, error) {
 	const envVar = "GOOGLE_APPLICATION_CREDENTIALS"
 	if filename := os.Getenv(envVar); filename != "" {
@@ -74,14 +85,6 @@ func applicationDefaultCredentials(ctx context.Context, scopes []string) (*inter
 	// None are found; return helpful error.
 	const url = "https://developers.google.com/accounts/docs/application-default-credentials"
 	return nil, fmt.Errorf("google: could not find default credentials. See %v for more information.", url)
-}
-
-func findCredentials(ctx context.Context, filename string, scopes []string) (*internal.Credentials, error) {
-	if (filename != "") {
-		return readCredentialsFile(ctx, filename, scopes)
-	} else {
-		return applicationDefaultCredentials(ctx, scopes)
-	}
 }
 
 func readCredentialsFile(ctx context.Context, filename string, scopes []string) (*internal.Credentials, error) {
