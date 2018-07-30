@@ -28,7 +28,16 @@ func createSettings(args map[string]string) (*sgauth.Settings) {
 func newHTTPClient(ctx context.Context, args map[string]string) (
 	*client.Client, error) {
 	baseUrl := fmt.Sprintf("https://%s/$rpc/%s/", args[kHost], args[kApiName])
-	return client.NewClient(ctx, createSettings(args), baseUrl)
+
+	http, err := sgauth.NewHTTPClient(ctx, createSettings(args))
+	if err != nil {
+		return nil, err
+	}
+	return &client.Client{
+		HTTP:        http,
+		BaseURL:     baseUrl,
+		UserAgent:   "protorpc/0.1",
+	}, nil
 }
 
 func newGrpcClient(ctx context.Context, args map[string]string) (library.LibraryServiceClient, error) {
